@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Issue Tracker</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f5f7fb;color:#1e293b;margin:0}
+header{background:#1e293b;color:white;padding:24px}
+main{max-width:950px;margin:30px auto;padding:0 18px}
+h1{margin:0}.subtitle{color:#cbd5e1;margin-bottom:0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.card,.panel{background:white;padding:20px;border-radius:12px;box-shadow:0 2px 8px #0000000a}
+.card strong{display:block;font-size:30px;margin-top:10px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+input,select,button{padding:10px;border:1px solid #cbd5e1;border-radius:7px;font-size:14px}
+button{background:#2563eb;color:white;border:none;cursor:pointer}
+button:hover{background:#1d4ed8}.delete{background:#dc2626}
+.issue{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #e2e8f0;padding:15px 0}
+.issue:last-child{border:0}.issue small{color:#64748b}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+@media(max-width:650px){.stats{grid-template-columns:repeat(2,1fr)}.issue{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<header><h1>Project Issue Tracker</h1><p class="subtitle">My first AI-powered website</p></header>
+<main>
+<section class="stats">
+<div class="card">Total<strong id="total">0</strong></div>
+<div class="card">Open<strong id="open">0</strong></div>
+<div class="card">In Progress<strong id="progress">0</strong></div>
+<div class="card">Closed<strong id="closed">0</strong></div>
+</section>
+<section class="panel">
+<h2>Issue List</h2>
+<div class="toolbar">
+<input id="title" maxlength="120" placeholder="Enter issue title">
+<select id="priority"><option>Medium</option><option>High</option><option>Low</option></select>
+<button onclick="addIssue()">Add Issue</button>
+</div>
+<div id="issues"></div>
+</section>
+</main>
+<script>
+const key="my-issue-tracker-v1";
+let items;
+try{items=JSON.parse(localStorage.getItem(key))||[]}catch(e){items=[]}
+if(!Array.isArray(items))items=[];
+function save(){localStorage.setItem(key,JSON.stringify(items))}
+function addIssue(){
+const input=document.getElementById("title");
+const title=input.value.trim();
+if(!title)return alert("Please enter an issue title.");
+items.push({id:Date.now(),title,priority:document.getElementById("priority").value,status:"Open"});
+input.value="";save();render();
+}
+function updateIssue(id,status){const item=items.find(x=>x.id===id);if(item){item.status=status;save();render()}}
+function deleteIssue(id){if(confirm("Delete this issue?")){items=items.filter(x=>x.id!==id);save();render()}}
+function render(){
+document.getElementById("total").textContent=items.length;
+document.getElementById("open").textContent=items.filter(x=>x.status==="Open").length;
+document.getElementById("progress").textContent=items.filter(x=>x.status==="In Progress").length;
+document.getElementById("closed").textContent=items.filter(x=>x.status==="Closed").length;
+const list=document.getElementById("issues");list.replaceChildren();
+if(!items.length){const p=document.createElement("p");p.textContent="No issues yet. Add your first issue!";list.append(p)}
+items.forEach(item=>{
+const row=document.createElement("div");row.className="issue";
+const info=document.createElement("div");
+const name=document.createElement("strong");name.textContent=item.title;
+const meta=document.createElement("small");meta.textContent="Priority: "+item.priority;
+info.append(name,document.createElement("br"),meta);
+const actions=document.createElement("div");actions.className="actions";
+const select=document.createElement("select");
+["Open","In Progress","Closed"].forEach(s=>{const opt=document.createElement("option");opt.value=s;opt.textContent=s;opt.selected=s===item.status;select.append(opt)});
+select.addEventListener("change",()=>updateIssue(item.id,select.value));
+const del=document.createElement("button");del.className="delete";del.textContent="Delete";del.addEventListener("click",()=>deleteIssue(item.id));
+actions.append(select,del);row.append(info,actions);list.append(row);
+});
+}
+render();
+</script>
+</body>
+</html>
